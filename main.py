@@ -11,6 +11,7 @@ def Get_IP():
     else:
         return None
     
+load_dotenv()    
 accesss_token = os.getenv("access_token")
 print("Access Token: ", accesss_token)  
 domain_id, ip_web = API_123HOST.GetInfoDomainByDomain(accesss_token, os.getenv("domain"))
