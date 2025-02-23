@@ -1,4 +1,4 @@
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key
 import API_123HOST
 import os
 import requests
@@ -21,11 +21,17 @@ def Get_IP():
 
 load_dotenv() 
 accesss_token = os.getenv("access_token")
-print_random_color_with_datetime("Access Token: " + accesss_token)  
+refresh_token = os.getenv("refresh_token")
+accesss_token, refresh_token = API_123HOST.Refresh_Token(refresh_token)
+set_key(".env", "access_token", accesss_token)
+set_key(".env", "refresh_token", refresh_token)
+print('access_token', accesss_token)
+print('refresh_token', refresh_token)
 domain_id, ip_web = API_123HOST.GetInfoDomainByDomain(accesss_token, os.getenv("domain"))
 
 ip_local = ip_web
 while True:
+    accesss_token = os.getenv("access_token")
     try:
         load_dotenv()
         ip_new = Get_IP()
@@ -45,4 +51,6 @@ while True:
             print_random_color_with_datetime("IP not changed")
         time.sleep(10)
     except:
-        print_random_color_with_datetime("Error Changing IP")
+        accesss_token, refresh_token = API_123HOST.Refresh_Token(refresh_token)
+        set_key(".env", "access_token", accesss_token)
+        set_key(".env", "refresh_token", refresh_token)
