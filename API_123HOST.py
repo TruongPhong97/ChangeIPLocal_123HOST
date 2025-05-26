@@ -14,6 +14,19 @@ def Login_Account(username, password):
     else:
         return None
 
+def Refresh_Token(refresh_token):
+    jsonData = {
+        "refresh_token": refresh_token
+    }
+    response = _request.post("https://client.123host.vn/api/token", json=jsonData)
+    if(response.status_code == 200):
+        access_token = response.json()["token"]
+        refresh_token = response.json()["refresh"]
+        # set access_token to .env 
+        return access_token, refresh_token
+    else:
+        return None
+
 def GetInfoDomainByDomain(access_token, domain):
     response = _request.get(f"https://client.123host.vn/api/domain/name/{domain}", headers={"Authorization": f"Bearer {access_token}"})
     if(response.status_code == 200):
