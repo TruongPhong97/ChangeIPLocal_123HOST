@@ -27,6 +27,13 @@ def Refresh_Token(refresh_token):
     else:
         return None
 
+def GetInfoAccount(access_token):
+    response = _request.get("https://client.123host.vn/api/details", headers={"Authorization": f"Bearer {access_token}"})
+    if(response.status_code == 200):
+        return response.json()
+    else:
+        return None
+
 def GetInfoDomainByDomain(access_token, domain):
     response = _request.get(f"https://client.123host.vn/api/domain/name/{domain}", headers={"Authorization": f"Bearer {access_token}"})
     if(response.status_code == 200):
