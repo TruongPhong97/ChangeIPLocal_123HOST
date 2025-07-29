@@ -9,8 +9,9 @@ def Login_Account(username, password):
     response = _request.post("https://client.123host.vn/api/login", json=jsonData)
     if(response.status_code == 200):
         access_token = response.json()["token"]
+        refresh_token = response.json()["refresh"]
         # set access_token to .env 
-        return access_token
+        return access_token, refresh_token
     else:
         return None
 
