@@ -21,6 +21,13 @@ def Refresh_Token(refresh_token):
     }
     response = _request.post("https://client.123host.vn/api/token", json=jsonData)
     if(response.status_code == 200):
+        # check if response has error
+        if "error" in response.json():
+            return None
+        # check if response token or refresh is null
+        if response.json().get("token") is None or response.json().get("refresh") is None:
+            return None
+        # get access_token and refresh_token from response json
         access_token = response.json()["token"]
         refresh_token = response.json()["refresh"]
         # set access_token to .env 
