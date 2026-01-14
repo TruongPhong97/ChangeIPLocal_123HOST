@@ -24,7 +24,7 @@ def get_current_ip():
 
 def main():
     while True:
-        load_dotenv()
+        load_dotenv(override=True)
         last_ip = os.getenv("last_ip")
         # GET CURRENT IP v4 ONLY
         current_ip = get_current_ip()
@@ -53,6 +53,7 @@ def main():
                 continue
             access_token, _ = login_result
             set_key(".env", "access_token", access_token)
+            os.environ["access_token"] = access_token
 
             try:
                 time.sleep(2.7)  # wait 2.7 seconds before fetching domain info
@@ -62,12 +63,14 @@ def main():
                 if ip_local == current_ip:
                     print("IP in 123HOST is already up-to-date.")
                     set_key(".env", "last_ip", current_ip)
+                    os.environ["last_ip"] = current_ip
                     time.sleep(10)
                     continue
                 time.sleep(3.2)  # wait 3.2 seconds before updating
                 print("Bắt đầu cập nhật DNS...")
                 if API_123HOST.UpdateDNSDomain(access_token, domain_id, current_ip):
                     set_key(".env", "last_ip", current_ip)
+                    os.environ["last_ip"] = current_ip
                     print_random_color_with_datetime("✅ Cập nhật DNS thành công!")
                 else:
                     print_random_color_with_datetime("❌ Cập nhật DNS thất bại.")
