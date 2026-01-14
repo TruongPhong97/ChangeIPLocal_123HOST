@@ -41,21 +41,51 @@ def GetInfoDomainByID(access_token, domain_id):
     else:
         return None
 
-def UpdateDNSDomain(access_token, domain_id, ip):
-    jsonData = {
-        "name": "@",
-        "type": "A",
-        "priority": "",
-        "content": ip
-    }
-    response = _request.put(f"https://client.123host.vn/api/domain/{domain_id}/dns/4", json=jsonData, headers={"Authorization": f"Bearer {access_token}"})
-    if(response.status_code == 200):
-        print(response.json())
-        return True
-    else:
-        print(response.status_code, response.text)
-        if response.status_code == 429 or "rate limited" in response.text.lower():
-            print("Rate limited by Cloudflare. Waiting 18 minutes before retrying...")
-            time.sleep(1080)  # wait 18 minutes
-            return False
+def UpdateDNSDomain(access_token, domain_id, new_ip, old_ip=None):
+    """Update all A records for a domain that currently have content == old_ip.
+    If old_ip is None, update any A record whose content != new_ip.
+    Returns True if at least one update succeeded and no fatal errors occurred.
+    """
+    content_info = GetInfoDomainByID(access_token, domain_id)
+    if content_info is None or "records" not in content_info:
+        print(f"No DNS records found for domain_id={domain_id}")
         return False
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+    any_updated = False
+    for record in content_info["records"]:
+        try:
+            record_type = record.get("type", {}).get("0")
+            record_id = record.get("id")
+            record_content = record.get("content")
+            if record_type != "A":
+                continue
+            # decide whether to update this record
+            if old_ip is not None:
+                should_update = (record_content == old_ip) and (record_content != new_ip)
+            else:
+                should_update = (record_content != new_ip)
+
+            if not should_update:
+                continue
+
+            jsonData = {
+                "name": record.get("name", "@"),
+                "type": "A",
+                "priority": record.get("priority") or "",
+                "content": new_ip
+            }
+            put_url = f"https://client.123host.vn/api/domain/{domain_id}/dns/{record_id}"
+            resp = _request.put(put_url, json=jsonData, headers=headers)
+            if resp.status_code == 200:
+                print(f"Updated record id={record_id} name={jsonData['name']} -> {new_ip}")
+                any_updated = True
+            else:
+                print(f"Failed to update record id={record_id}:", resp.status_code, resp.text)
+                if resp.status_code == 429 or "rate limited" in (resp.text or "").lower():
+                    print("Rate limited by Cloudflare. Waiting 18 minutes before retrying...")
+                    time.sleep(1080)
+                    return False
+        except Exception as e:
+            print(f"Exception updating record {record}: {e}")
+    return any_updated
